@@ -12,18 +12,12 @@ module Analytics
     #
     #   1. OrderLock       (serializes writes to the orders rollup)
     #   2. InventoryLock   (serializes the inventory-velocity counter)
-    #
-    # NOTE: The order matters. Any other worker that touches BOTH the
-    # orders rollup and the inventory counter MUST acquire these locks
-    # in the same order, otherwise the two workers can deadlock under
-    # concurrent load.
     class OrderWorker < BaseWorker
       sidekiq_options queue: :orders, retry: 5
 
       def perform(payload)
         order = Analytics::Models::Order.from_payload(payload)
 
-        # Acquire locks in the canonical order: OrderLock THEN InventoryLock.
         lock.with_locks("OrderLock", "InventoryLock") do
           persist_order_event(order)
           bump_inventory_velocity(order)

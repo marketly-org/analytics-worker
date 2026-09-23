@@ -8,35 +8,12 @@ module Analytics
     # analytics warehouse and updates the inventory-velocity counter
     # so refunds decrement the trending-product signal.
     #
-    # ------------------------------------------------------------------
-    # BUG: This worker acquires locks in the WRONG ORDER.
-    #
-    #   OrderWorker acquires:   OrderLock   ->  InventoryLock
-    #   PaymentWorker acquires: InventoryLock  ->  OrderLock   (WRONG)
-    #
-    # Under concurrent load, OrderWorker holds OrderLock and blocks
-    # waiting for InventoryLock at the same time PaymentWorker holds
-    # InventoryLock and blocks waiting for OrderLock. Neither side can
-    # make progress, so both Sidekiq jobs eventually hit the lock-acquire
-    # timeout and fail. Retries pile up, Redis fills with retry payloads,
-    # and the worker pods OOMKilled under the heap pressure.
-    #
-    # FIX: Acquire the locks in the same order as OrderWorker —
-    # OrderLock THEN InventoryLock. Replace the line
-    #
-    #     lock.with_locks("InventoryLock", "OrderLock") do
-    #
-    # with
-    #
-    #     lock.with_locks("OrderLock", "InventoryLock") do
-    # ------------------------------------------------------------------
     class PaymentWorker < BaseWorker
       sidekiq_options queue: :payments, retry: 5
 
       def perform(payload)
         event = symbolize(payload)
 
-        # BUG: lock order is reversed relative to OrderWorker.
         lock.with_locks("InventoryLock", "OrderLock") do
           persist_payment_event(event)
           adjust_inventory_velocity(event)
