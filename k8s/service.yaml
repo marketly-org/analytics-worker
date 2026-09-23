@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-worker
+  namespace: marketly
+  labels:
+    app: analytics-worker
+    tier: worker
+spec:
+  type: ClusterIP
+  selector:
+    app: analytics-worker
+  ports:
+    - name: health
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

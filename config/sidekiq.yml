@@ -1,0 +1,18 @@
+version: 2.1
+
+# Sidekiq configuration for the analytics-worker.
+#
+# Concurrency is intentionally conservative (10) — these workers hit
+# Postgres with row-level locks, so going much higher just shifts
+# contention into the database.
+
+:concurrency: 10
+:queues:
+  - [orders, 3]
+  - [payments, 3]
+  - [default, 1]
+:max_retries: 5
+:timeout: 25
+
+production:
+  :concurrency: 10

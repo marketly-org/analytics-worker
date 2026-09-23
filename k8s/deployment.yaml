@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-worker
+  namespace: marketly
+  labels:
+    app: analytics-worker
+    tier: worker
+  annotations:
+    sentinel.io/repo: "marketly-org/analytics-worker"
+    sentinel.io/branch: "main"
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: analytics-worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: analytics-worker
+        tier: worker
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/marketly-org/analytics-worker:sha-624330a
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: marketly-redis-credentials
+                  key: url
+            - name: POSTGRES_HOST
+              value: "postgres.marketly.svc.cluster.local"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: marketly-db-credentials
+                  key: analytics-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: marketly-db-credentials
+                  key: analytics-password
+            - name: POSTGRES_DB
+              value: "marketly_analytics"
+            - name: SIDEKIQ_CONCURRENCY
+              value: "10"
+            - name: HEALTH_PORT
+              value: "8080"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

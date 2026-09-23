@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("DB_POOL", 10) %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", "marketly") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
+  database: <%= ENV.fetch("POSTGRES_DB", "marketly_analytics") %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DB_TEST", "marketly_analytics_test") %>
+
+production:
+  <<: *default
