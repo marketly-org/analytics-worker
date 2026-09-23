@@ -16,6 +16,10 @@ gem "json", "~> 2.7"
 # Logging
 gem "logger", "~> 1.6"
 
+# Health server — WEBrick is not part of the Ruby stdlib since 3.0 and
+# is not loadable under `bundle exec` unless declared here.
+gem "webrick", "~> 1.8"
+
 # Environment loading
 gem "dotenv", "~> 3.1", groups: [:development, :test]
 
