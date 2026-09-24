@@ -26,8 +26,8 @@ module Analytics
         token = SecureRandom.hex(16)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) + @max_wait_ms
         loop do
-          ok = @redis.with { |c| c.set("lock:#{name}", token, nx: true, px: @ttl_ms) }
-          return token if ok
+          result = @redis.with { |c| c.call("SET", "lock:#{name}", token, "NX", "PX", @ttl_ms) }
+          return token if result == "OK"
 
           if Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) >= deadline
             raise LockError, "could not acquire lock '#{name}' within #{@max_wait_ms}ms"
