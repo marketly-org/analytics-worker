@@ -26,7 +26,7 @@ module Analytics
         token = SecureRandom.hex(16)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) + @max_wait_ms
         loop do
-          ok = @redis.with { |c| c.set("lock:#{name}", token, nx: true, px: @ttl_ms) }
+          ok = @redis.with { |c| c.call("SET", "lock:#{name}", token, nx: true, px: @ttl_ms) } == "OK"
           return token if ok
 
           if Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) >= deadline
