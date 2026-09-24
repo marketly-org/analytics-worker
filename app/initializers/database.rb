@@ -13,11 +13,11 @@ module Analytics
   # any other application-level Redis use. Sidekiq owns its own pool
   # internally for job state.
   REDIS = ConnectionPool.new(size: ENV.fetch("REDIS_POOL_SIZE", "10").to_i, timeout: 2) do
-    RedisClient.config(
+    RedisClient.new(
       url: ENV.fetch("REDIS_URL", "redis://localhost:6379/1"),
       timeout: 1.0,
       reconnect_attempts: 2
-    ).new_client
+    )
   end
 
   # Postgres connection pool. Workers check out a connection for the
