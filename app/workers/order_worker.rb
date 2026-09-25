@@ -16,6 +16,12 @@ module Analytics
       sidekiq_options queue: :orders, retry: 5
 
       def perform(payload)
+        # Ensure payload has order_id before processing
+        unless payload.key?(:order_id) || payload.key?("order_id")
+          logger.error("OrderWorker received payload missing 'order_id' key. Raising error to trigger Sidekiq retry/dead-letter.", payload: payload)
+          raise ArgumentError, "Payload missing required 'order_id' key"
+        end
+
         order = Analytics::Models::Order.from_payload(payload)
 
         lock.with_locks("OrderLock", "InventoryLock") do
