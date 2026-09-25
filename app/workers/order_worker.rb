@@ -17,13 +17,15 @@ module Analytics
 
       def perform(payload)
         # Ensure payload has order_id before processing
-        unless payload.key?(:order_id) || payload.key?("order_id")
+        unless payload.is_a?(Hash) && (payload.key?(:order_id) || payload.key?("order_id"))
           logger.error("OrderWorker received payload missing 'order_id' key. Raising error to trigger Sidekiq retry/dead-letter.", payload: payload)
           raise ArgumentError, "Payload missing required 'order_id' key"
         end
 
         begin
-          order = Analytics::Models::Order.from_payload(payload)
+          # Ensure the payload has symbol keys for the Order model which expects symbols
+          symbolized_payload = payload.each_with_object({}) { |(k, v), h| h[k.to_sym] = v }
+          order = Analytics::Models::Order.from_payload(symbolized_payload)
         rescue KeyError => e
           logger.error("OrderWorker payload missing required key: #{e.message}", payload: payload)
           raise ArgumentError, "Payload missing required key"
