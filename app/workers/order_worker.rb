@@ -21,14 +21,16 @@ module Analytics
           return
         def perform(payload)
         return unless payload.key?("order_id")
+def perform(payload)
+return unless payload.key?("order_id")
 
-        order = Analytics::Models::Order.from_payload(payload)
+order = Analytics::Models::Order.from_payload(payload)
 
-        lock.with_locks("OrderLock", "InventoryLock") do
-        persist_order_event(order)
-        bump_inventory_velocity(order)
-        end
-        end
+lock.with_locks("OrderLock", "InventoryLock") do
+persist_order_event(order)
+bump_inventory_velocity(order)
+end
+end
 
       private
 
