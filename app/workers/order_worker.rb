@@ -16,6 +16,10 @@ module Analytics
       sidekiq_options queue: :orders, retry: 5
 
       def perform(payload)
+        unless payload.is_a?(Hash) && payload.key?("order_id")
+          logger.warn("OrderWorker received payload without order_id, skipping")
+          return
+        end
         order = Analytics::Models::Order.from_payload(payload)
 
         lock.with_locks("OrderLock", "InventoryLock") do
