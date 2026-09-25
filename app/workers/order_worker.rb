@@ -20,19 +20,14 @@ module Analytics
           logger.error("order_worker" => "missing order_id", "payload" => payload)
           return
         end
-def perform(payload)
-unless payload.is_a?(Hash) && payload.key?("order_id")
-logger.error("order_worker" => "missing order_id", "payload" => payload)
-return
-end
 
-order = Analytics::Models::Order.from_payload(payload)
+        order = Analytics::Models::Order.from_payload(payload)
 
-lock.with_locks("OrderLock", "InventoryLock") do
-persist_order_event(order)
-bump_inventory_velocity(order)
-end
-end
+        lock.with_locks("OrderLock", "InventoryLock") do
+          persist_order_event(order)
+          bump_inventory_velocity(order)
+        end
+      end
 
       private
 
