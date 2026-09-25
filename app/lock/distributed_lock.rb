@@ -26,7 +26,7 @@ module Analytics
         token = SecureRandom.hex(16)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) + @max_wait_ms
         loop do
-          ok = @redis.with { |c| c.set("lock:#{name}", token, nx: true, px: @ttl_ms) }
+          ok = @redis.with { |c| c.call("SET", "lock:#{name}", token, ["NX", "PX", @ttl_ms]) }
           return token if ok
 
           if Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) >= deadline
@@ -48,7 +48,7 @@ module Analytics
       LUA
 
       def release(name, token)
-        @redis.with { |c| c.eval(RELEASE_SCRIPT, keys: ["lock:#{name}"], argv: [token]) }
+        @redis.with { |c| c.call("EVAL", RELEASE_SCRIPT, 1, "lock:#{name}", token) }
       end
 
       # Acquire +name+, yield to the caller, and always release.
