@@ -19,14 +19,16 @@ module Analytics
         unless payload.is_a?(Hash) && payload.key?("order_id")
           logger.warn("OrderWorker received payload without order_id, skipping")
           return
-        end
+        def perform(payload)
+        return unless payload.key?("order_id")
+
         order = Analytics::Models::Order.from_payload(payload)
 
         lock.with_locks("OrderLock", "InventoryLock") do
-          persist_order_event(order)
-          bump_inventory_velocity(order)
+        persist_order_event(order)
+        bump_inventory_velocity(order)
         end
-      end
+        end
 
       private
 
