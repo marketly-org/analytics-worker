@@ -18,11 +18,6 @@ module Analytics
       def perform(payload)
         order = Analytics::Models::Order.from_payload(payload)
 
-        if order.nil?
-          logger.warn("OrderWorker received a payload that resulted in a nil order. Payload: #{payload.inspect}")
-          return # Stop processing this job
-        end
-
         lock.with_locks("OrderLock", "InventoryLock") do
           persist_order_event(order)
           bump_inventory_velocity(order)
