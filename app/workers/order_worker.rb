@@ -16,9 +16,9 @@ module Analytics
       sidekiq_options queue: :orders, retry: 5
 
       def perform(payload)
-        order = Analytics::Models::Order.from_payload(payload)
+        order = Analytics::Models::Order.find(payload['order_id'])
         unless order
-          logger.warn("Order not found for payload #{payload.inspect}")
+          logger.warn("Order not found for ID #{payload['order_id']}")
           return
         end
 
