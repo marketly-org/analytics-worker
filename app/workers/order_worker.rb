@@ -17,6 +17,10 @@ module Analytics
 
       def perform(payload)
         order = Analytics::Models::Order.from_payload(payload)
+        unless order
+          logger.warn("Order not found for payload #{payload.inspect}")
+          return
+        end
 
         lock.with_locks("OrderLock", "InventoryLock") do
           persist_order_event(order)
