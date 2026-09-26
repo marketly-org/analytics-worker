@@ -31,6 +31,15 @@ module Analytics
       def item_count
         items.sum { |i| i.fetch("quantity", 1) }
       end
+
+      # The root cause indicates that `order.process!` is called but not defined.
+      # Adding an empty method to resolve the `NoMethodError`.
+      # Its actual purpose is unclear from the provided `OrderWorker` code,
+      # which already handles order persistence and inventory updates via
+      # `persist_order_event` and `bump_inventory_velocity`.
+      def process!
+        # No-op
+      end
     end
   end
 end
